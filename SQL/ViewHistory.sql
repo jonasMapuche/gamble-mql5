@@ -1,0 +1,2 @@
+SELECT *
+      FROM HISTORY A

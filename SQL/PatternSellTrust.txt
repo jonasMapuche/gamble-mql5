@@ -1,0 +1,410 @@
+CREATE VIEW PatternSellTrust AS
+    SELECT MES_MENOS_1.PATTERN,
+           MES_MENOS_12.QUANTITY AS QTD__12,
+           MES_MENOS_11.QUANTITY AS QTD__11,
+           MES_MENOS_10.QUANTITY AS QTD__10,
+           MES_MENOS_9.QUANTITY AS QTD__9,
+           MES_MENOS_8.QUANTITY AS QTD__8,
+           MES_MENOS_7.QUANTITY AS QTD__7,
+           MES_MENOS_6.QUANTITY AS QTD__6,
+           MES_MENOS_5.QUANTITY AS QTD__5,
+           MES_MENOS_4.QUANTITY AS QTD__4,
+           MES_MENOS_3.QUANTITY AS QTD__3,
+           MES_MENOS_2.QUANTITY AS QTD__2,
+           MES_MENOS_1.QUANTITY AS QTD__1
+      FROM (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-1 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_1
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-2 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_2 ON MES_MENOS_1.PATTERN = MES_MENOS_2.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-3 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_3 ON MES_MENOS_1.PATTERN = MES_MENOS_3.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-4 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_4 ON MES_MENOS_1.PATTERN = MES_MENOS_4.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-5 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_5 ON MES_MENOS_1.PATTERN = MES_MENOS_5.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-6 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_6 ON MES_MENOS_1.PATTERN = MES_MENOS_6.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-7 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_7 ON MES_MENOS_1.PATTERN = MES_MENOS_7.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-8 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_8 ON MES_MENOS_1.PATTERN = MES_MENOS_8.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-9 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_9 ON MES_MENOS_1.PATTERN = MES_MENOS_9.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-10 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_10 ON MES_MENOS_1.PATTERN = MES_MENOS_10.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-11 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_11 ON MES_MENOS_1.PATTERN = MES_MENOS_11.PATTERN
+           INNER JOIN
+           (
+               SELECT ViewPattern.PATTERN,
+                      CASE WHEN BUY_MONTH.QUANTITY IS NULL THEN 0 ELSE BUY_MONTH.QUANTITY END AS QUANTITY
+                 FROM (
+                          SELECT PATTERN,
+                                 COUNT(1) AS QUANTITY
+                            FROM (
+                                     SELECT CAST (strftime('%Y%m', DATE_EVENT) AS DECIMAL) AS YEAR_MONTH,
+                                            PATTERN
+                                       FROM (
+                                                SELECT DATE(substr(date, 1, 4) || '-' || substr(date, 6, 2) || '-' || substr(date, 9, 2) ) AS DATE_EVENT,
+                                                       PATTERN,
+                                                       DATE
+                                                  FROM (
+                                                           SELECT DATE,
+                                                                  PATTERN
+                                                             FROM ViewOrderSellStopTrue
+                                                       )
+                                                       ORDER_BUY
+                                            )
+                                            BUY
+                                 )
+                                 BUY_COUNT
+                           WHERE YEAR_MONTH = STRFTIME('%Y%m', DATETIME('2024-01-01', '-12 MONTHS') ) 
+                           GROUP BY PATTERN
+                      )
+                      BUY_MONTH
+                      RIGHT OUTER JOIN
+                      ViewPattern ON BUY_MONTH.PATTERN = ViewPattern.PATTERN
+                ORDER BY ViewPattern.PATTERN
+           )
+           MES_MENOS_12 ON MES_MENOS_1.PATTERN = MES_MENOS_12.PATTERN
+     ORDER BY MES_MENOS_1.PATTERN;
