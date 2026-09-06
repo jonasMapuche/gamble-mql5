@@ -9,8 +9,7 @@
 //+------------------------------------------------------------------+
 //| Include                                                          |
 //+------------------------------------------------------------------+
-#include <Trade/SymbolInfo.mqh>
-#include "../CandleStick.mqh"
+#include "../Target/CandleStick.mqh"
 #include "../Golang.mqh"
 #include "../SQlite.mqh"
 //+------------------------------------------------------------------+
@@ -83,7 +82,7 @@ bool Doji::High(const int value,const string intimenow,const bool save)
       inPattern=candlestick[value1].getPattern();
       inSymbol=candlestick[value1].getSymbol();
 //---
-      if(dojigreen(inOpen1,inClose1)){
+      if(dojigreen(inOpen1,inClose1,percent3)){
 //---
         if(save){
           SQLite *sqlite;
@@ -124,7 +123,7 @@ bool Doji::Low(const int value,const string intimenow,const bool save)
       inPattern=candlestick[value1].getPattern();
       inSymbol=candlestick[value1].getSymbol();
 //---
-      if(dojired(inOpen1,inClose1)){
+      if(dojired(inOpen1,inClose1,percent3)){
 //---
         if(save){
           SQLite *sqlite;

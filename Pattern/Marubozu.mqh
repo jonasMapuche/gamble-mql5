@@ -9,8 +9,7 @@
 //+------------------------------------------------------------------+
 //| Include                                                          |
 //+------------------------------------------------------------------+
-#include <Trade/SymbolInfo.mqh>
-#include "../CandleStick.mqh"
+#include "../Target/CandleStick.mqh"
 #include "../Golang.mqh"
 #include "../SQlite.mqh"
 //+------------------------------------------------------------------+
@@ -65,6 +64,7 @@ void Marubozu::Write(const int value)
 bool Marubozu::High(const int value,const string intimenow,const bool save,const double average)
   {
 //---
+    double percent3=0.0003;
     int value1=value;
     int account_max=1+1;
     double inHigh1=0,inLow1=0,inClose1=0,inOpen1=0;
@@ -93,7 +93,7 @@ bool Marubozu::High(const int value,const string intimenow,const bool save,const
       if(
           ((inHigh1-inLow1)>=mean)
           &&
-          (marubozugreen(inHigh1,inOpen1,inClose1,inLow1))
+          (marubozugreen(inHigh1,inOpen1,inClose1,inLow1,percent3))
         ){
 //---
         if(save){
@@ -113,6 +113,7 @@ bool Marubozu::High(const int value,const string intimenow,const bool save,const
 bool Marubozu::Low(const int value,const string intimenow,const bool save,const double average)
   {
 //---
+    double percent3=0.0003;
     int value1=value;
     int account_max=1+1;
     double inHigh1=0,inLow1=0,inClose1=0,inOpen1=0;
@@ -141,7 +142,7 @@ bool Marubozu::Low(const int value,const string intimenow,const bool save,const 
       if(
           ((inHigh1-inLow1)>=mean)
           &&
-          (marubozured(inHigh1,inOpen1,inClose1,inLow1))
+          (marubozured(inHigh1,inOpen1,inClose1,inLow1,percent3))
         ){
 //---
         if(save){

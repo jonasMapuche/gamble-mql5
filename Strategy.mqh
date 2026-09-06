@@ -9,11 +9,17 @@
 //+------------------------------------------------------------------+
 //| Include                                                          |
 //+------------------------------------------------------------------+
-#include <Trade/SymbolInfo.mqh>
 #include "Golang.mqh"
 #include "Thread.mqh"
-#include "CandleStick.mqh"
+#include "Target/CandleStick.mqh"
 #include "SQlite.mqh"
+#include "Target\TrendStick.mqh"
+#include "Target\VolumeStick.mqh"
+#include "Target\MovingAverageStick.mqh"
+#include "Gauge\Volume.mqh"
+#include "Gauge\MovingAverage.mqh"
+#include "Statistic\Descriptive.mqh"
+#include "Target\PositionStick.mqh"
 //+------------------------------------------------------------------+
 //| Class Router                                                     |
 //+------------------------------------------------------------------+
@@ -23,13 +29,36 @@ class Strategy
 //---
       bool LoadHigh(const int start);
       bool LoadLow(const int start);
+      bool LoadTrendHigh(const int start);
+      bool LoadTrendLow(const int start);
+      bool BalanceVolumeLow(const int start);
+      bool BalanceVolumeHigh(const int start);
+      bool MovingAverageCDLow(const int start);
+      bool MovingAverageCDHigh(const int start);
+      bool RelativeStrengthIndexLow(const int start);
+      bool RelativeStrengthIndexHigh(const int start);
+      bool StochasticOscillatorLow(const int start);
+      bool StochasticOscillatorHigh(const int start);
+      bool BandBollingerLow(const int start);
+      bool BandBollingerHigh(const int start);
     public:
       Strategy();
       ~Strategy();
 //---
       bool PatternHigh();
       bool PatternLow();
-      
+      bool TrendHigh();      
+      bool TrendLow();
+      bool OBVLow();
+      bool OBVHigh();
+      bool MACDClose(PositionStick &positionStick);
+      bool MACDOpen(long brand);
+      bool RSILow();
+      bool RSIHigh();
+      bool StochasticLow();
+      bool StochasticHigh();
+      bool BBLow();
+      bool BBHigh();
   };
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -42,6 +71,132 @@ Strategy::Strategy()
 //+------------------------------------------------------------------+
 Strategy::~Strategy()
   {
+  }
+//+------------------------------------------------------------------+
+//| Verify trend high                                                |
+//+------------------------------------------------------------------+
+bool Strategy::TrendHigh()
+  { 
+    int inStart=1;
+    if(LoadTrendHigh(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify trend low                                                 |
+//+------------------------------------------------------------------+
+bool Strategy::TrendLow()
+  { 
+    int inStart=1;
+    if(LoadTrendLow(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern on band bollinger low                             |
+//+------------------------------------------------------------------+
+bool Strategy::BBLow()
+  { 
+    int inStart=1;
+    if(BandBollingerLow(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern on band bollinger high                            |
+//+------------------------------------------------------------------+
+bool Strategy::BBHigh()
+  { 
+    int inStart=1;
+    if(BandBollingerHigh(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern on balance volume low                             |
+//+------------------------------------------------------------------+
+bool Strategy::OBVLow()
+  { 
+    int inStart=1;
+    if(BalanceVolumeLow(inStart)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern on balance volume high                            |
+//+------------------------------------------------------------------+
+bool Strategy::OBVHigh()
+  { 
+    int inStart=1;
+    if(BalanceVolumeHigh(inStart)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern moving average convergence-divergence for closing |
+//+------------------------------------------------------------------+
+bool Strategy::MACDClose(PositionStick &positionStick)
+  { 
+//---
+    int inStart=1;
+    long kind=positionStick.kind;
+    if(kind==POSITION_TYPE_BUY){
+      if(MovingAverageCDHigh(inStart)) return true;
+    }else{
+      if(MovingAverageCDLow(inStart)) return true;
+    }
+//---
+    return false;
+//---
+
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern moving average convergence-divergence opening     |
+//+------------------------------------------------------------------+
+bool Strategy::MACDOpen(long brand)
+  { 
+//---
+    int inStart=1;
+    long kind=brand;
+    if(kind==POSITION_TYPE_BUY){
+      if(MovingAverageCDHigh(inStart)) return true;
+    }else{
+      if(MovingAverageCDLow(inStart)) return true;
+    }
+//---
+    return false;
+//---
+
+  }  
+//+------------------------------------------------------------------+
+//| Verify pattern relative strength index low                       |
+//+------------------------------------------------------------------+
+bool Strategy::RSILow()
+  { 
+    int inStart=1;
+    if(RelativeStrengthIndexLow(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern relative strength index high                      |
+//+------------------------------------------------------------------+
+bool Strategy::RSIHigh()
+  { 
+    int inStart=1;
+    if(RelativeStrengthIndexHigh(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern stochastic low                                    |
+//+------------------------------------------------------------------+
+bool Strategy::StochasticLow()
+  { 
+    int inStart=1;
+    if(StochasticOscillatorLow(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern stochastic high                                   |
+//+------------------------------------------------------------------+
+bool Strategy::StochasticHigh()
+  { 
+    int inStart=1;
+    if(StochasticOscillatorHigh(inStart)) return true;
+    return false;
   }
 //+------------------------------------------------------------------+
 //| Verify pattern high                                              |
@@ -655,6 +810,485 @@ bool Strategy::LoadLow(const int start)
     for(int i=0; i<account_max; i++) 
       if (account[i]==TRUE) 
         return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| High trend                                                       |
+//+------------------------------------------------------------------+
+bool Strategy::LoadTrendHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="buy";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyTrendHigh(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"TREND HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+      account[1]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Low trend                                                       |
+//+------------------------------------------------------------------+
+bool Strategy::LoadTrendLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyTrendLow(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"TREND LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[1]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Balance volume Low                                               |
+//+------------------------------------------------------------------+
+bool Strategy::BalanceVolumeLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyRuptureLow(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"OBV LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Balance volume High                                              |
+//+------------------------------------------------------------------+
+bool Strategy::BalanceVolumeHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="buy";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyRuptureHigh(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"OBV HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+      account[1]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Moving average convergence-divergence low                        |
+//+------------------------------------------------------------------+
+bool Strategy::MovingAverageCDLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyHistogramLow(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"MACD LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Moving average convergence-divergence high                       |
+//+------------------------------------------------------------------+
+bool Strategy::MovingAverageCDHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="buy";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyHistogramHigh(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"MACD HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Relative strength index low                                      |
+//+------------------------------------------------------------------+
+bool Strategy::RelativeStrengthIndexLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyOverBought(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"RSI LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Relative strength index high                                      |
+//+------------------------------------------------------------------+
+bool Strategy::RelativeStrengthIndexHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="buy";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyOverSold(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"RSI LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Stochastic oscillator low                                        |
+//+------------------------------------------------------------------+
+bool Strategy::StochasticOscillatorLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyStochasticOverBought(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"STOCHASTIC LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Stochastic oscillator high                                       |
+//+------------------------------------------------------------------+
+bool Strategy::StochasticOscillatorHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="buy";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyStochasticOverSold(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"STOCHASTIC HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }  
+//+------------------------------------------------------------------+
+//| Band bollinger low                                               |
+//+------------------------------------------------------------------+
+bool Strategy::BandBollingerLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyBollingerClosing(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"BAND BOLLINGER LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Band bollinger high                                              |
+//+------------------------------------------------------------------+
+bool Strategy::BandBollingerHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="high";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyBollingerOpening(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"BAND BOLLINGER HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
     return false;
   }
 //+------------------------------------------------------------------+

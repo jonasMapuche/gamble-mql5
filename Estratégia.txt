@@ -1,0 +1,1260 @@
+//+------------------------------------------------------------------+
+//|                                                     Strategy.mqh |
+//|                                  Copyright 2022, Stomach.com.br. |
+//|                                       https://www.stomach.com.br |
+//+------------------------------------------------------------------+
+#property copyright "Copyright 2022, Stomach.com.br."
+#property link      "https://www.stomach.com.br"
+#property version   "1.00"
+//+------------------------------------------------------------------+
+//| Include                                                          |
+//+------------------------------------------------------------------+
+#include <Trade/SymbolInfo.mqh>
+#include "Golang.mqh"
+#include "Thread.mqh"
+#include "CandleStick.mqh"
+#include "SQlite.mqh"
+#include "Target\TrendStick.mqh"
+#include "Target\VolumeStick.mqh"
+#include "Target\MovingAverageStick.mqh"
+#include "Gauge\Volume.mqh"
+#include "Gauge\MovingAverage.mqh"
+//+------------------------------------------------------------------+
+//| Class Router                                                     |
+//+------------------------------------------------------------------+
+class Strategy
+  {
+    private:
+//---
+      bool LoadHigh(const int start);
+      bool LoadLow(const int start);
+      bool TrendHigh(const int start);
+      bool BalanceVolumeLow(const int start);
+      bool BalanceVolumeHigh(const int start);
+      bool MovingAverageCDLow(const int start);
+      bool MovingAverageCDHigh(const int start);
+      bool RelativeStrengthIndexLow(const int start);
+      bool RelativeStrengthIndexHigh(const int start);
+      bool StochasticOscillatorLow(const int start);
+      bool StochasticOscillatorHigh(const int start);
+      bool BandBollingerLow(const int start);
+      bool BandBollingerHigh(const int start);
+    public:
+      Strategy();
+      ~Strategy();
+//---
+      bool PatternHigh();
+      bool PatternLow();
+      bool Trend();      
+      bool OBVLow();
+      bool OBVHigh();
+      bool MACDLow();
+      bool MACDHigh();
+      bool RSILow();
+      bool RSIHigh();
+      bool StochasticLow();
+      bool StochasticHigh();
+      bool BBLow();
+      bool BBHigh();
+  };
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+Strategy::Strategy()
+  {
+  }
+//+------------------------------------------------------------------+
+//|                                                                  |
+//+------------------------------------------------------------------+
+Strategy::~Strategy()
+  {
+  }
+//+------------------------------------------------------------------+
+//| Verify trend                                             |
+//+------------------------------------------------------------------+
+bool Strategy::Trend()
+  { 
+    int instart=1;
+    bool output=false;
+    int last=instart;
+    int prior=last+1;
+//---
+    double inOpen=0,inClose=0;
+    inOpen=iOpen(_Symbol,_Period,last);
+    inClose=iClose(_Symbol,_Period,last);
+//---
+    double priorOpen=0,priorClose=0;
+    priorOpen=iOpen(_Symbol,_Period,prior);
+    priorClose=iClose(_Symbol,_Period,prior);
+//---
+    CandleStick *candleStick;
+    candleStick=new CandleStick();
+    double valuelast=0,valueprior=0;
+    if(candleStick.green(inOpen,inClose)) valuelast=inOpen; else valuelast=inClose;
+    if(candleStick.green(priorOpen,priorClose)) valueprior=priorOpen; else valueprior=inClose;
+    if(valueprior<valuelast) output=TrendHigh(instart);
+    return output;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern on band bollinger low                             |
+//+------------------------------------------------------------------+
+bool Strategy::BBLow()
+  { 
+    int inStart=1;
+    if(BandBollingerLow(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern on band bollinger high                            |
+//+------------------------------------------------------------------+
+bool Strategy::BBHigh()
+  { 
+    int inStart=1;
+    if(BandBollingerHigh(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern on balance volume low                             |
+//+------------------------------------------------------------------+
+bool Strategy::OBVLow()
+  { 
+    int inStart=1;
+    if(BalanceVolumeLow(inStart)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern on balance volume high                            |
+//+------------------------------------------------------------------+
+bool Strategy::OBVHigh()
+  { 
+    int inStart=1;
+    if(BalanceVolumeHigh(inStart)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern moving average convergence-divergence low         |
+//+------------------------------------------------------------------+
+bool Strategy::MACDLow()
+  { 
+    int inStart=1;
+    if(MovingAverageCDLow(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern moving average convergence-divergence high        |
+//+------------------------------------------------------------------+
+bool Strategy::MACDHigh()
+  { 
+    int inStart=1;
+    if(MovingAverageCDHigh(inStart)) return true;
+    return false;
+  }   
+//+------------------------------------------------------------------+
+//| Verify pattern relative strength index low                       |
+//+------------------------------------------------------------------+
+bool Strategy::RSILow()
+  { 
+    int inStart=1;
+    if(RelativeStrengthIndexLow(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern relative strength index high                      |
+//+------------------------------------------------------------------+
+bool Strategy::RSIHigh()
+  { 
+    int inStart=1;
+    if(RelativeStrengthIndexHigh(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern stochastic low                                    |
+//+------------------------------------------------------------------+
+bool Strategy::StochasticLow()
+  { 
+    int inStart=1;
+    if(StochasticOscillatorLow(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern stochastic high                                   |
+//+------------------------------------------------------------------+
+bool Strategy::StochasticHigh()
+  { 
+    int inStart=1;
+    if(StochasticOscillatorHigh(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern high                                              |
+//+------------------------------------------------------------------+
+bool Strategy::PatternHigh()
+  { 
+    int inStart=0;
+    inStart=2;
+    if(LoadHigh(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern low                                               |
+//+------------------------------------------------------------------+
+bool Strategy::PatternLow()
+  {
+    int inStart=0;
+    inStart=2;
+    if(LoadLow(inStart)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Load high pattern                                                |
+//+------------------------------------------------------------------+
+bool Strategy::LoadHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Descriptive *descriptive;
+    descriptive=new Descriptive(quantity,"DESCRIPTIVE");
+    const double meansize=descriptive.MeanSize(quantity);
+    const double meanbody=descriptive.MeanBody(quantity);
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    double inOpen=0,inClose=0;
+    long inVolume=0;
+    inOpen=iOpen(_Symbol,_Period,1);
+    inClose=iClose(_Symbol,_Period,1);
+    inVolume=iVolume(_Symbol,_Period,1);
+    CandleStick *candleStick;
+    candleStick=new CandleStick();
+    const bool green=candleStick.green(inOpen,inClose);
+//---
+    const bool save=true;
+    const int quantitymean=quantity;
+    const int max=quantity-10;
+    string value="buy";
+    const string insymbol=(string)_Symbol;
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=26;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyHaramiHigh(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"HARAMI HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[0]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"HARAMI HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyHammer(quantity,intimenow,meanbody,start)) { //meansize
+      if (green) {
+        sqlite.SaveChoise(intimenow,"HAMMER",insymbol,intimenow,value,"TRUE",inVolume);
+        account[1]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"HAMMER",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyHammerInverted(quantity,intimenow,meanbody,start)) { //meansize
+      if (green) {
+        sqlite.SaveChoise(intimenow,"HAMMER INVERTED",insymbol,intimenow,value,"TRUE",inVolume);
+        account[2]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"HAMMER INVERTED",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyEngulfmentHigh(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"ENFULFMENT HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[3]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"ENGULFMENT HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyPiercingLine(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"PIERCING LINE",insymbol,intimenow,value,"TRUE",inVolume);
+        account[4]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"PIERCING LINE",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyMorningStar(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"MORNING STAR",insymbol,intimenow,value,"TRUE",inVolume);
+        account[5]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"MORNING STAR",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifySeatBeltHigh(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"SEAT BELT HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[6]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"SEAT BELT HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---      
+    if(thread.VerifyCarrierPigeon(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"CARRIER PIGEON",insymbol,intimenow,value,"TRUE",inVolume);
+        account[7]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"CARRIER PIGEON",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyLineLow(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"LINE LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[8]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"LINE LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyMeetingLineHigh(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"MEETING LINE HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[9]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"MEETING LINE HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyStickSandwich(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"STICK SANDWICH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[10]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"STICK SANDWICH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifySouthernStar(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"SOUTHERN STAR",insymbol,intimenow,value,"TRUE",inVolume);
+        account[11]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"SOUTHERN STAR",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyTripleStarHigh(quantity,intimenow,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"TRIPLE STAR HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[12]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"TRIPLE STAR HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyThreeRiverHigh(quantity,intimenow,meanbody,start)) { //meansize
+      if (green) {
+        sqlite.SaveChoise(intimenow,"THREE RIVER HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[13]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"THREE RIVER HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyInterruptionHigh(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"INTERRUPTION HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[14]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"INTERRUPTION HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyLadderHigh(quantity,intimenow,meanbody,start)) { //meansize
+      if (green) {
+        sqlite.SaveChoise(intimenow,"LADEER HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[15]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"LADDER HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyKickingHigh(quantity,intimenow,meanbody,start)) { //meansize
+      if (green) {
+        sqlite.SaveChoise(intimenow,"KICKING HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[16]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"KICKING HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyAbandonedBabyHigh(quantity,intimenow,meanbody,start)) { //meansize
+      if (green) {
+        sqlite.SaveChoise(intimenow,"ABANDONE BABY HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[17]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"ABANDONE BABY HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyThreeInsideHigh(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"THREE INSIDE HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[18]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"THREE INSIDE HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyThreeOutside(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"THREE OUTSIDE",insymbol,intimenow,value,"TRUE",inVolume);
+        account[19]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"THREE OUTSIDE",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyThreeSoldierHigh(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"THREE SOLDIER HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[20]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"THREE SOLDIER HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyBabySwallowedHigh(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"BABY SWALLOWED HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[21]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"BABY SWALLOWED HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifySplitLineHigh(quantity,intimenow,meanbody,start)) {
+      if (green) {
+        sqlite.SaveChoise(intimenow,"SPLIT LINE HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[22]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"SPLIT LINE HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyStrikeHigh(quantity,intimenow,meanbody,start)) { //meansize
+      if (green) {
+        sqlite.SaveChoise(intimenow,"STRIKE HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[23]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"STRIKE HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyTasukiGapHigh(quantity,intimenow,meanbody,start)) { //meansize
+      if (green) {
+        sqlite.SaveChoise(intimenow,"TASUKI GAP HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[24]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"TASUKI GAP HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---  
+    if(thread.VerifyWhiteLineSideBySideHigh(quantity,intimenow,start)){
+      if (green) {
+        sqlite.SaveChoise(intimenow,"WHITE LINE SIDE BY SIDE HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[25]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"WHITE LINE SIDE BY SIDE HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    }
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Load low pattern                                                 |
+//+------------------------------------------------------------------+
+bool Strategy::LoadLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Descriptive *descriptive;
+    descriptive=new Descriptive(quantity,"DESCRIPTIVE");
+    const double meansize=descriptive.MeanSize(quantity);
+    const double meanbody=descriptive.MeanBody(quantity);
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    double inOpen=0,inClose=0;
+    long inVolume=0;
+    inOpen=iOpen(_Symbol,_Period,1);
+    inClose=iClose(_Symbol,_Period,1);
+    inVolume=iVolume(_Symbol,_Period,1);
+    CandleStick *candleStick;
+    candleStick=new CandleStick();
+    const bool red=candleStick.red(inOpen,inClose);
+//---
+    const bool save=true;
+    const int quantitymean=quantity;
+    const int max=quantity-10;
+    string value="sell";
+    const string insymbol=(string)_Symbol;
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=24;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyHaramiLow(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"HARAMI LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[0]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"HARAMI LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyShootingStar(quantity,intimenow,meanbody,start)) { //meansize
+      if (red) {
+        sqlite.SaveChoise(intimenow,"SHOOTING START",insymbol,intimenow,value,"TRUE",inVolume);
+        account[1]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"SHOOTING START",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyHanged(quantity,intimenow,meanbody,start)) { //meansize
+      if (red) {
+        sqlite.SaveChoise(intimenow,"HANGED",insymbol,intimenow,value,"TRUE",inVolume);
+        account[2]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"HANGED",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyEngulfmentLow(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"ENGULFMENT LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[3]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"ENGULFMENT LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyBlackCloud(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"BLACK CLOUD",insymbol,intimenow,value,"TRUE",inVolume);
+        account[4]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"BLACK CLOUD",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyEveningStar(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"EVENING STAR",insymbol,intimenow,value,"TRUE",inVolume);
+        account[5]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"EVENING STAR",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifySeatBeltLow(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"SEAT BELT LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[6]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"SEAT BELT LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyDescendingFalcon(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"DESCENDING FALCON",insymbol,intimenow,value,"TRUE",inVolume);
+        account[7]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"DESCENDING FALCON",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyLineHigh(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"LINE HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+        account[8]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"LINE HIGH",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyMeetingLineLow(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"MEETING LINE LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[9]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"MEETING LINE LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyAdvancedLock(quantity,intimenow,meanbody,start)) { //meansize
+      if (red) {
+        sqlite.SaveChoise(intimenow,"ADVANCED LOCK",insymbol,intimenow,value,"TRUE",inVolume);
+        account[10]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"ADVANCED LOCK",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyTripleStarLow(quantity,intimenow,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"TRIPLE STAR LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[11]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"TRIPLE STAR LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyTwoCrow(quantity,intimenow,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"TWO CROW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[12]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"TWO CROW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyInterruptionLow(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"INTERRUPTION LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[13]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"INTERRUPTION LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyLadderLow(quantity,intimenow,meanbody,start)) { //meansize
+      if (red) {
+        sqlite.SaveChoise(intimenow,"LADDER LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[14]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"LADDER LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyKickingLow(quantity,intimenow,meanbody,start)) { //meansize
+      if (red) {
+        sqlite.SaveChoise(intimenow,"KICKING LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[15]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"KICKING LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyAbandonedBabyLow(quantity,intimenow,meanbody,start)) { //meansize
+      if (red) {
+        sqlite.SaveChoise(intimenow,"ABANDONE BABY LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[16]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"ABANDONE BABY LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyThreeInsideLow(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"THREE INSIDE LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[17]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"THREE INSIDE LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyThreeSoldierLow(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"THREE SOLDIER LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[18]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"THREE SOLDIER LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyBabySwallowedLow(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"BABY SWALLOWED LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[19]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"BABY SWALLOWED LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifySplitLineLow(quantity,intimenow,meanbody,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"SPLIT LINE LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[20]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"SPLIT LINE LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyStrikeLow(quantity,intimenow,meanbody,start)) { //meansize
+      if (red) {
+        sqlite.SaveChoise(intimenow,"STRIKE LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[21]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"STRIKE LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyTasukiGapLow(quantity,intimenow,meanbody,start)) { //meansize
+      if (red) {
+        sqlite.SaveChoise(intimenow,"TASUKI GAP LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[22]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"TASUKI GAP LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    if(thread.VerifyWhiteLineSideBySideLow(quantity,intimenow,start)) {
+      if (red) {
+        sqlite.SaveChoise(intimenow,"WHITE LINE SIDE BY SIDE LOW",insymbol,intimenow,value,"TRUE",inVolume);
+        account[23]=TRUE;
+        //return true;
+      } else {
+        sqlite.SaveChoise(intimenow,"WHITE LINE SIDE BY SIDE LOW",insymbol,intimenow,value,"FALSE",inVolume);
+      };    
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| High trend                                                       |
+//+------------------------------------------------------------------+
+bool Strategy::TrendHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    int instart=start;
+    TrendStick *supportStick[]; 
+    TrendStick *resistenceStick[]; 
+    ArrayResize(supportStick,quantity);
+    ArrayResize(resistenceStick,quantity);
+    supportStick[quantity-1]=new TrendStick();
+    resistenceStick[quantity-1]=new TrendStick();
+//---
+    double inOpen=0,inClose=0;
+    int inTrend=0;
+    inOpen=iOpen(_Symbol,_Period,1);
+    inClose=iClose(_Symbol,_Period,1);
+//---
+    bool output=false;
+    CandleStick *candleStick;
+    candleStick=new CandleStick();
+    Thread *thread;
+    thread=new Thread();
+//---
+    for(int value=instart; value<quantity; value++) {
+//---
+      inOpen=iOpen(_Symbol,_Period,value);
+      inClose=iClose(_Symbol,_Period,value);
+//---
+      double support=0;
+      if(thread.VerifyDown(quantity,intimenow,value)) {
+        if(candleStick.green(inOpen,inClose)) support=inOpen; else support=inClose;
+      } else {
+        support=supportStick[inTrend].support;
+      }
+//---  
+      double endurance=0;
+      if(thread.VerifyUp(quantity,intimenow,value)) {
+        if(candleStick.red(inOpen,inClose)) endurance=inOpen; else endurance=inClose;
+      } else {
+        endurance=trendStick[inTrend].endurance;
+      }
+//---
+      if(thread.VerifySupport(quantity,intimenow,value)) {
+        if(candleStick.green(inOpen,inClose)) endurance=inOpen; else endurance=inClose;
+      } 
+//---
+      if(thread.VerifyEndurance(quantity,intimenow,value)) {
+        if(candleStick.red(inOpen,inClose)) support=inOpen; else support=inClose;
+      }                     
+//---
+      trendStick[inTrend++].Add(value,endurance,support,inTrend++);
+    }
+//---
+    return output;
+  }
+//+------------------------------------------------------------------+
+//| Balance volume Low                                               |
+//+------------------------------------------------------------------+
+bool Strategy::BalanceVolumeLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyRuptureLow(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"OBV LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Balance volume High                                              |
+//+------------------------------------------------------------------+
+bool Strategy::BalanceVolumeHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="buy";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyRuptureHigh(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"OBV HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+      account[1]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Moving average convergence-divergence low                        |
+//+------------------------------------------------------------------+
+bool Strategy::MovingAverageCDLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyHistogramLow(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"MACD LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Moving average convergence-divergence high                       |
+//+------------------------------------------------------------------+
+bool Strategy::MovingAverageCDHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="buy";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyHistogramHigh(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"MACD HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Relative strength index low                                      |
+//+------------------------------------------------------------------+
+bool Strategy::RelativeStrengthIndexLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyOverBought(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"RSI LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Relative strength index high                                      |
+//+------------------------------------------------------------------+
+bool Strategy::RelativeStrengthIndexHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="buy";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyOverSold(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"RSI LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Stochastic oscillator low                                        |
+//+------------------------------------------------------------------+
+bool Strategy::StochasticOscillatorLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyStochasticOverBought(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"STOCHASTIC LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Stochastic oscillator high                                       |
+//+------------------------------------------------------------------+
+bool Strategy::StochasticOscillatorHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="buy";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyStochasticOverSold(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"STOCHASTIC HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }  
+//+------------------------------------------------------------------+
+//| Band bollinger low                                               |
+//+------------------------------------------------------------------+
+bool Strategy::BandBollingerLow(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="sell";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyBollingerClosing(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"BAND BOLLINGER LOW",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Band bollinger high                                              |
+//+------------------------------------------------------------------+
+bool Strategy::BandBollingerHigh(const int start)
+  {
+//---    
+    const int quantity=100;
+    const string intimenow=TimeToString(TimeCurrent());
+//---
+    Thread *thread;
+    thread=new Thread();
+    int inStart=0;
+//---
+    const bool save=true;
+    const string insymbol=(string)_Symbol;
+    long inVolume=0;
+    inVolume=iVolume(_Symbol,_Period,1);
+    string value="high";
+//---
+    enum ENUM_SINAL {TRUE=1, FALSE=-1, ZERO=0};
+    ENUM_SINAL account[];
+    int account_max=2;
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=FALSE;
+//---
+    SQLite *sqlite;
+    sqlite=new SQLite();
+//---
+    if(thread.VerifyBollingerOpening(quantity,intimenow,start)) {
+      sqlite.SaveChoise(intimenow,"BAND BOLLINGER HIGH",insymbol,intimenow,value,"TRUE",inVolume);
+      account[0]=TRUE;
+      //return true;
+    };
+//---
+    for(int i=0; i<account_max; i++) 
+      if (account[i]==TRUE) 
+        return true;
+//---
+    return false;
+  }
+//+------------------------------------------------------------------+

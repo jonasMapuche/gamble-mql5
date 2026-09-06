@@ -46,7 +46,12 @@
 #include "Pattern\Strike.mqh"
 #include "Pattern\TasukiGap.mqh"
 #include "Pattern\WhiteLineSideBySide.mqh"
-
+#include "Pattern\OnBalanceVolume.mqh"
+#include "Pattern\MACD.mqh"
+#include "Pattern\RelativeStrengthIndex.mqh"
+#include "Pattern\StochasticOscillator.mqh"
+#include "Pattern\BandBollinger.mqh"
+#include "Pattern\Trend.mqh"
 //+------------------------------------------------------------------+
 //| Class                                                            |
 //+------------------------------------------------------------------+
@@ -110,6 +115,22 @@ class Thread
       bool VerifyTasukiGapLow(const int quantity,const string intimenow,const double average,const int start);
       bool VerifyWhiteLineSideBySideHigh(const int quantity,const string intimenow,const int start);
       bool VerifyWhiteLineSideBySideLow(const int quantity,const string intimenow,const int start);
+      bool VerifySupport(const int quantity,const string intimenow,const int start);
+      bool VerifyEndurance(const int quantity,const string intimenow,const int start);
+      bool VerifyDown(const int quantity,const string intimenow,const int start);
+      bool VerifyUp(const int quantity,const string intimenow,const int start);
+      bool VerifyRuptureHigh(const int quantity,const string intimenow,const int start);
+      bool VerifyRuptureLow(const int quantity,const string intimenow,const int start);
+      bool VerifyHistogramLow(const int quantity,const string intimenow,const int start);
+      bool VerifyHistogramHigh(const int quantity,const string intimenow,const int start);
+      bool VerifyOverBought(const int quantity,const string intimenow,const int start);
+      bool VerifyOverSold(const int quantity,const string intimenow,const int start);
+      bool VerifyStochasticOverBought(const int quantity,const string intimenow,const int start);      
+      bool VerifyStochasticOverSold(const int quantity,const string intimenow,const int start);   
+      bool VerifyBollingerOpening(const int quantity,const string intimenow,const int start);
+      bool VerifyBollingerClosing(const int quantity,const string intimenow,const int start);
+      bool VerifyTrendHigh(const int quantity,const string intimenow,const int start);
+      bool VerifyTrendLow(const int quantity,const string intimenow,const int start);
   };
 //+------------------------------------------------------------------+
 //|                                                                  |
@@ -916,4 +937,196 @@ bool Thread::VerifyWhiteLineSideBySideLow(const int quantity,const string intime
 //---
     return false; 
   }
+//+------------------------------------------------------------------+
+//| Verify pattern trend high                                        |
+//+------------------------------------------------------------------+
+bool Thread::VerifyTrendHigh(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="TREND HIGH";
+//---    
+    Trend *trend;
+    trend=new Trend(quantity,inpattern);
+//---   
+    if(trend.High(quantity,start,intimenow,save)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern trend low                                         |
+//+------------------------------------------------------------------+
+bool Thread::VerifyTrendLow(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="TREND LOW";
+//---    
+    Trend *trend;
+    trend=new Trend(quantity,inpattern);
+//---   
+    if(trend.Low(quantity,start,intimenow,save)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern rupture high                                      |
+//+------------------------------------------------------------------+
+bool Thread::VerifyRuptureHigh(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="OBV HIGH";
+    const int inmme=10;
+//---    
+    OnBalanceVolume *onBalanceVolume;
+    onBalanceVolume=new OnBalanceVolume(quantity,inpattern,inmme);
+//---   
+    if(onBalanceVolume.Low(start,intimenow,save)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern rupture low                                       |
+//+------------------------------------------------------------------+
+bool Thread::VerifyRuptureLow(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="OBV LOW";
+    const int inmme=10;
+//---    
+    OnBalanceVolume *onBalanceVolume;
+    onBalanceVolume=new OnBalanceVolume(quantity,inpattern,inmme);
+//---   
+    if(onBalanceVolume.High(start,intimenow,save)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern histogram negative                                |
+//+------------------------------------------------------------------+
+bool Thread::VerifyHistogramLow(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="MACD LOW";
+//---    
+    MACD *mACD;
+    mACD=new MACD(quantity,inpattern);
+//---   
+    if(mACD.Low(start,intimenow,save)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern histogram positive                                |
+//+------------------------------------------------------------------+
+bool Thread::VerifyHistogramHigh(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="MACD HIGH";
+//---    
+    MACD *mACD;
+    mACD=new MACD(quantity,inpattern);
+//---   
+    if(mACD.High(start,intimenow,save)) return true;
+    return false;
+  }
+//+------------------------------------------------------------------+
+//| Verify pattern overbought                                        |
+//+------------------------------------------------------------------+
+bool Thread::VerifyOverBought(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="RSI LOW";
+    const int inmms=14;
+//---    
+    RelativeStrengthIndex *relativeStrengthIndex;
+    relativeStrengthIndex=new RelativeStrengthIndex(quantity,inpattern,inmms);
+//---   
+    if(relativeStrengthIndex.Low(start,intimenow,save)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern oversold                                          |
+//+------------------------------------------------------------------+
+bool Thread::VerifyOverSold(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="RSI HIGH";
+    const int inmms=14;
+//---    
+    RelativeStrengthIndex *relativeStrengthIndex;
+    relativeStrengthIndex=new RelativeStrengthIndex(quantity,inpattern,inmms);
+//---   
+    if(relativeStrengthIndex.High(start,intimenow,save)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern stochastic overbought                             |
+//+------------------------------------------------------------------+
+bool Thread::VerifyStochasticOverBought(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="STOCHASTIC LOW";
+    const int ink=8;
+    const int inloopk=3;
+    const int inquantity=100;
+//---    
+    StochasticOscillator *stochasticOscillator;
+    stochasticOscillator=new StochasticOscillator(quantity,inpattern,ink,inloopk);
+//---   
+    if(stochasticOscillator.Low(start,intimenow,save,ink,inloopk,inquantity)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern stochastic oversold                               |
+//+------------------------------------------------------------------+
+bool Thread::VerifyStochasticOverSold(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="STOCHASTIC HIGH";
+    const int ink=8;
+    const int inloopk=3;
+    const int inquantity=100;
+//---    
+    StochasticOscillator *stochasticOscillator;
+    stochasticOscillator=new StochasticOscillator(quantity,inpattern,ink,inloopk);
+//---   
+    if(stochasticOscillator.High(start,intimenow,save,ink,inloopk,inquantity)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern band bollinger opening                            |
+//+------------------------------------------------------------------+
+bool Thread::VerifyBollingerOpening(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="BOLLINGER OPENING";
+    const int inquantity=100;
+//---    
+    BandBollinger *bandBollinger;
+    bandBollinger=new BandBollinger(quantity,inpattern);
+//---   
+    if(bandBollinger.Open(start,intimenow,save)) return true;
+    return false;
+  } 
+//+------------------------------------------------------------------+
+//| Verify pattern band bollinger closing                            |
+//+------------------------------------------------------------------+
+bool Thread::VerifyBollingerClosing(const int quantity,const string intimenow,const int start)
+  {
+//---
+    const bool save=true;
+    const string inpattern="BOLLINGER CLOSING";
+    const int inquantity=100;
+//---    
+    BandBollinger *bandBollinger;
+    bandBollinger=new BandBollinger(quantity,inpattern);
+//---   
+    if(bandBollinger.Close(start,intimenow,save)) return true;
+    return false;
+  }   
 //+------------------------------------------------------------------+

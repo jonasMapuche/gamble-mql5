@@ -1,0 +1,40 @@
+      
+      
+      
+      if((nextClose>trendStick[inTrend].endurance) && (nextOpen>trendStick[inTrend].endurance)) {
+        long endurance=nextClose;
+        long support=trendStick[inTrend].support;
+//---
+        if(nextOpen>nextClose) endurance=nextOpen;
+//---
+        if(nextOpen<trendStick[inTrend].support) support=nextOpen;
+        if(nextClose<trendStick[inTrend].support) support=nextClose;
+//---
+        trendStick[inTrend++].Add(value+1,support,endurance,inTrend++);
+        continue/
+      }     
+
+
+            
+            
+            
+      if((nextClose<trendStick[inTrend].support) && (nextOpen<trendStick[inTrend].support)) {
+        long endurance=trendStick[inTrend].endurence;
+        long support=nextClose;
+//---
+        if(nextClose>nextOpen) support=nextOpen;
+//---
+        if(nextClose>trendStick[inTrend].endurance) endurance=nextClose;
+        if(nextOpen>trendStick[inTrend].endurance) endurance=nextOpen;
+//---
+        trendStick[inTrend++].Add(value+1,endurance,support,inTrend++);
+        continue;
+      } 
+
+
+    
+      double endurance=0;
+      bool inendurance=candleStick.endurance(trendStick[inTrend].endurance,inOpen,inClose);
+      bool inred=candleStick.red(inOpen,inClose);
+      if(inendurance && inred) endurance=inOpen;
+      if(inendurance && !inred) endurance=inClose;
