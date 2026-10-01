@@ -9,69 +9,45 @@
 //+------------------------------------------------------------------+
 //| Class                                                            |
 //+------------------------------------------------------------------+
-class MovingAverageStick
+class MovingMeanStick
   {
     private:
 
     public:
       int position;
-      double macd;
-      double histogram;
-      double mme;
       double mms21;
       double mms200;
-      MovingAverageStick();
-      ~MovingAverageStick();
-      void Add(const int inposition, const double inmacd, const double inhistogram, const double inmme,const double inmms21,const double inmms200);
-      bool histogrampositive(const double inhistogram);
-      bool histogramnegative(const double inhistogram);
+      MovingMeanStick();
+      ~MovingMeanStick();
+      void Add(const int inposition, const double inmms21,const double inmms200);
       bool movingmeanhigh(const double inmms21,const double inmms200);
       bool movingmeanlow(const double inmms21,const double inmms200);
   };
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
 //+------------------------------------------------------------------+
-MovingAverageStick::MovingAverageStick()
+MovingMeanStick::MovingMeanStick()
   {
   }
 //+------------------------------------------------------------------+
 //| Destructor                                                       |
 //+------------------------------------------------------------------+
-MovingAverageStick::~MovingAverageStick()
+MovingMeanStick::~MovingMeanStick()
   {
   }
 //+------------------------------------------------------------------+
 //| Add item                                                         |
 //+------------------------------------------------------------------+
-void MovingAverageStick::Add(const int inposition, const double inmacd, const double inhistogram, const double inmme,const double inmms21,const double inmms200)
+void MovingMeanStick::Add(const int inposition,const double inmms21,const double inmms200)
   {
     this.position=inposition;
-    this.macd=inmacd;
-    this.histogram=inhistogram;
-    this.mme=inmme;
     this.mms21=inmms21;
     this.mms200=inmms200;
   }
 //+------------------------------------------------------------------+
-//| Verify histogram positive                                        |
-//+------------------------------------------------------------------+
-bool MovingAverageStick::histogrampositive(const double inhistogram)
-  {
-    if(histogram>0) return true;
-    return false;
-  }
-//+------------------------------------------------------------------+
-//| Verify histogram negative                                        |
-//+------------------------------------------------------------------+
-bool MovingAverageStick::histogramnegative(const double inhistogram)
-  {
-    if(histogram<0) return true;
-    return false;
-  }
-//+------------------------------------------------------------------+
 //| Verify moving mean high                                          |
 //+------------------------------------------------------------------+
-bool MovingAverageStick::movingmeanhigh(const double inmms21,const double inmms200)
+bool MovingMeanStick::movingmeanhigh(const double inmms21,const double inmms200)
   {
     if(inmms21>inmms200) return true;
     return false;
@@ -79,7 +55,7 @@ bool MovingAverageStick::movingmeanhigh(const double inmms21,const double inmms2
 //+------------------------------------------------------------------+
 //| Verify moving mean low                                          |
 //+------------------------------------------------------------------+
-bool MovingAverageStick::movingmeanlow(const double inmms21,const double inmms200)
+bool MovingMeanStick::movingmeanlow(const double inmms21,const double inmms200)
   {
     if(inmms21<inmms200) return true;
     return false;

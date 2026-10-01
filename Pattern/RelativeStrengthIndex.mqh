@@ -32,8 +32,10 @@ class RelativeStrengthIndex : RelativeStrengthStick
       RelativeStrengthIndex(const int value,const string inpattern,const int inmms);
       ~RelativeStrengthIndex();
       void Write(const int value);
-      bool Low(const int value,const string intimenow,const bool save);
+      bool Overbought(const int value,const string intimenow,const bool save);
+      bool Oversold(const int value,const string intimenow,const bool save);
       bool High(const int value,const string intimenow,const bool save);
+      bool Low(const int value,const string intimenow,const bool save);
   };
 //+------------------------------------------------------------------+
 //| Construtor write candle                                          |
@@ -74,9 +76,9 @@ void RelativeStrengthIndex::Write(const int value)
       WriteCandle(DoubleToString(candlestick[i].getHigh()),DoubleToString(candlestick[i].getOpen()),DoubleToString(candlestick[i].getClose()),DoubleToString(candlestick[i].getLow()),IntegerToString(i));
   }
 //+------------------------------------------------------------------+
-//| Verify low                                                       |
+//| Verify overbought                                                |
 //+------------------------------------------------------------------+
-bool RelativeStrengthIndex::Low(const int value,const string intimenow,const bool save)
+bool RelativeStrengthIndex::Overbought(const int value,const string intimenow,const bool save)
   {
 //---  
     int value1=value;
@@ -108,11 +110,13 @@ bool RelativeStrengthIndex::Low(const int value,const string intimenow,const boo
     }
 //---    
     return false;
+//---
+
   }
 //+------------------------------------------------------------------+
-//| Verify high                                                      |
+//| Verify oversold                                                      |
 //+------------------------------------------------------------------+
-bool RelativeStrengthIndex::High(const int value,const string intimenow,const bool save)
+bool RelativeStrengthIndex::Oversold(const int value,const string intimenow,const bool save)
   {
 //---  
     int value1=value;
@@ -144,5 +148,89 @@ bool RelativeStrengthIndex::High(const int value,const string intimenow,const bo
     }
 //---    
     return false;
+//---
+    
+  }
+//+------------------------------------------------------------------+
+//| Verify high                                                      |
+//+------------------------------------------------------------------+
+bool RelativeStrengthIndex::High(const int value,const string intimenow,const bool save)
+  {
+//---  
+    int value1=value;
+    int value2=value+1;
+    int value3=value2+1;
+    int account_max=3+1;
+//---
+    string inTime="",inPattern="",inSymbol="";
+//---
+    enum ENUM_SINAL {TRUE = 1, FALSE = -1, ZERO = 0};
+    ENUM_SINAL account[];
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=ZERO;
+//---
+    for(int i=value1; i<=value3; i++) {
+      if(i==value1) if(!oversold(relativeStrengthStick[i].strength)) account[1]=TRUE; else account[1]=FALSE;
+      if(i==value3) if(oversold(relativeStrengthStick[i].strength)) account[3]=TRUE; else account[3]=FALSE;
+//---
+      if((account[1]==TRUE) && (account[3]==TRUE)) {
+//---
+        inTime=candlestick[value1].getTime();
+        inPattern=candlestick[value1].getPattern();
+        inSymbol=candlestick[value1].getSymbol();
+//---
+        if(save) {
+          SQLite *sqlite;
+          sqlite=new SQLite();
+          sqlite.SaveData(intimenow,inPattern,inSymbol,inTime);
+        }
+        return true;
+      }
+    }
+//---    
+    return false;
+//---
+    
+  }
+//+------------------------------------------------------------------+
+//| Verify low                                                       |
+//+------------------------------------------------------------------+
+bool RelativeStrengthIndex::Low(const int value,const string intimenow,const bool save)
+  {
+//---  
+    int value1=value;
+    int value2=value+1;
+    int value3=value2+1;
+    int account_max=3+1;
+//---
+    string inTime="",inPattern="",inSymbol="";
+//---
+    enum ENUM_SINAL {TRUE = 1, FALSE = -1, ZERO = 0};
+    ENUM_SINAL account[];
+    ArrayResize(account,account_max);
+    for(int i=0; i<account_max; i++) account[i]=ZERO;
+//---
+    for(int i=value1; i<=value3; i++) {
+      if(i==value1) if(!overbought(relativeStrengthStick[i].strength)) account[1]=TRUE; else account[1]=FALSE;
+      if(i==value3) if(overbought(relativeStrengthStick[i].strength)) account[3]=TRUE; else account[3]=FALSE;
+//---
+      if((account[1]==TRUE) && (account[3]==TRUE)) {
+//---
+        inTime=candlestick[value1].getTime();
+        inPattern=candlestick[value1].getPattern();
+        inSymbol=candlestick[value1].getSymbol();
+//---
+        if(save) {
+          SQLite *sqlite;
+          sqlite=new SQLite();
+          sqlite.SaveData(intimenow,inPattern,inSymbol,inTime);
+        }
+        return true;
+      }
+    }
+//---    
+    return false;
+//---
+    
   }
 //+------------------------------------------------------------------+

@@ -12,7 +12,7 @@
 #include "../Target/CandleStick.mqh"
 #include "../Golang.mqh"
 #include "../SQlite.mqh"
-#include "../Target/MovingAverageStick.mqh"
+#include "../Target/MACDStick.mqh"
 #include "../Gauge/MovingAverage.mqh"
 //+------------------------------------------------------------------+
 //| Variable                                                         |
@@ -20,25 +20,27 @@
 //+------------------------------------------------------------------+
 //| Class                                                            |
 //+------------------------------------------------------------------+
-class MACD : MovingAverageStick
+class MACD : MACDStick
   {
     private:
 
     protected:
       CandleStick *candlestick[];   
-      MovingAverageStick *movingAverageStick[];
+      MACDStick *mACDStick[];
       
     public:
-      MACD(const int value,const string inpattern);
+      MACD(const int value,const string inpattern,const int inmme);
       ~MACD();
       void Write(const int value);
       bool High(const int value,const string intimenow,const bool save);
       bool Low(const int value,const string intimenow,const bool save);
+      bool MMHigh(const int value,const string intimenow,const bool save);      
+      bool MMLow(const int value,const string intimenow,const bool save);      
   };
 //+------------------------------------------------------------------+
 //| Construtor write candle                                          |
 //+------------------------------------------------------------------+
-MACD::MACD(const int value,const string inpattern)
+MACD::MACD(const int value,const string inpattern,const int inmme)
   {
 //---
     int quantity=value+1;
@@ -49,21 +51,16 @@ MACD::MACD(const int value,const string inpattern)
       candlestick[i].Save(iHigh(_Symbol,_Period,i),iOpen(_Symbol,_Period,i),iClose(_Symbol,_Period,i),iLow(_Symbol,_Period,i),TimeToString(iTime(_Symbol,_Period,i)),iVolume(_Symbol,_Period,i),inpattern,_Symbol);
     }
 //---
-    ArrayResize(movingAverageStick,quantity);
+    ArrayResize(mACDStick,quantity);
     MovingAverage *movingAverage;
     movingAverage=new MovingAverage(quantity,"MACD");
-    int init=1;
-    int index26=26;
-    int index12=12;
-    int index9=9;
-    for(int i=0; i<quantity; i++) {
-      double inmme26=movingAverage.MME(index26);
-      double inmme12=movingAverage.MME(index12);
-      double inmme9=movingAverage.MME(index9);
-      double inmacd=inmme26/inmme12;
-      double inhistogram=inmacd-inmme9;
-      movingAverageStick[i]=new MovingAverageStick();
-      movingAverageStick[i].Add(i,inmacd,inhistogram,inmme9);
+    int mme9_value=inmme;
+    for(int i=quantity; i>=0; i--) {
+      double macd_cumulate=movingAverage.MACD(quantity,i,mme9_value);
+      double mme9_cumulate=movingAverage.MME(quantity,i,mme9_value);
+      double histogram_cumulate=macd_cumulate-mme9_cumulate;
+      mACDStick[i]=new MACDStick();
+      mACDStick[i].Add(i,macd_cumulate,histogram_cumulate,mme9_cumulate);
     }
   }
 //+------------------------------------------------------------------+
@@ -79,6 +76,8 @@ void MACD::Write(const int value)
   {
     for(int i=1; i<value; i++)
       WriteCandle(DoubleToString(candlestick[i].getHigh()),DoubleToString(candlestick[i].getOpen()),DoubleToString(candlestick[i].getClose()),DoubleToString(candlestick[i].getLow()),IntegerToString(i));
+//---
+
   }
 //+------------------------------------------------------------------+
 //| Verify low                                                       |
@@ -99,8 +98,8 @@ bool MACD::Low(const int value,const string intimenow,const bool save)
     for(int i=0; i<account_max; i++) account[i]=ZERO;
 //---
     for(int i=value1; i<=value3; i++) {
-      if(i==value1) if(histogramnegative(movingAverageStick[i].histogram)) account[1]=TRUE; else account[1]=FALSE;
-      if(i==value3) if(histogrampositive(movingAverageStick[i].histogram)) account[3]=TRUE; else account[3]=FALSE;
+      if(i==value1) if(histogramnegative(mACDStick[i].histogram)) account[1]=TRUE; else account[1]=FALSE;
+      if(i==value3) if(histogrampositive(mACDStick[i].histogram)) account[3]=TRUE; else account[3]=FALSE;
 //---
       if((account[1]==TRUE) && (account[3]==TRUE)) {
 //---
@@ -118,6 +117,8 @@ bool MACD::Low(const int value,const string intimenow,const bool save)
     }
 //---    
     return false;
+//---
+
   }
 //+------------------------------------------------------------------+
 //| Verify high                                                      |
@@ -138,8 +139,8 @@ bool MACD::High(const int value,const string intimenow,const bool save)
     for(int i=0; i<account_max; i++) account[i]=ZERO;
 //---
     for(int i=value1; i<=value3; i++) {
-      if(i==value1) if(histogrampositive(movingAverageStick[i].histogram)) account[1]=TRUE; else account[1]=FALSE;
-      if(i==value3) if(histogramnegative(movingAverageStick[i].histogram)) account[3]=TRUE; else account[3]=FALSE;
+      if(i==value1) if(histogrampositive(mACDStick[i].histogram)) account[1]=TRUE; else account[1]=FALSE;
+      if(i==value3) if(histogramnegative(mACDStick[i].histogram)) account[3]=TRUE; else account[3]=FALSE;
 //---
       if((account[1]==TRUE) && (account[3]==TRUE)) {
 //---

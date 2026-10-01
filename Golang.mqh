@@ -94,12 +94,12 @@ void BetweenCloseEnd(const string text)
 
 void WriteCandle(const string high,const string open,const string close,const string low,const string i) 
   {
-    printf("| Count %s = High %s - Open %s - Close %s - Low %s",i,high,open,close,low); 
+    printf("| Position %s = High %s - Open %s - Close %s - Low %s",i,high,open,close,low); 
   };
 
 void WriteCandle(const string high,const string open,const string close,const string low,const string i,const string time,const string volume,const string pattern,const string symbol) 
   {
-    printf("| Count %s = High %s - Open %s - Close %s - Low %s - Time %s - Volume %s - Pattern %s - Symbol %s",i,high,open,close,low,time,volume,pattern,symbol); 
+    printf("| Position %s = High %s - Open %s - Close %s - Low %s - Time %s - Volume %s - Pattern %s - Symbol %s",i,high,open,close,low,time,volume,pattern,symbol); 
   };
     
 void WriteArquive(int arquive,const string text) 
@@ -222,13 +222,3 @@ void SendPush(string notification)
     if (feedback != 1) return; 
     PushMessage(notification);
   }; 
-  
-/*
-//--- enviamos a notificação
-    if(!TerminalInfoInteger(TERMINAL_NOTIFICATIONS_ENABLED))
-      Print("Error. The client terminal does not have permission to send notifications");
-    ResetLastError();
-    if(!SendNotification("Ola"))
-      Print("SendNotification() failed. Error ",GetLastError());
-*/
-  

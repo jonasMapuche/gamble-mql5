@@ -12,7 +12,7 @@
 #include "../Target/CandleStick.mqh"
 #include "../Golang.mqh"
 #include "../SQlite.mqh"
-#include "../Target/BandBollingerStick.mqh"
+#include "../Target/MovingMeanStick.mqh"
 #include "../Gauge/MovingAverage.mqh"
 //+------------------------------------------------------------------+
 //| Variable                                                         |
@@ -20,25 +20,25 @@
 //+------------------------------------------------------------------+
 //| Class                                                            |
 //+------------------------------------------------------------------+
-class BandBollinger : BandBollingerStick
+class MovingMean : MovingMeanStick
   {
     private:
 
     protected:
       CandleStick *candlestick[];   
-      BandBollingerStick *bandBollingerStick[];
-      
+      MovingMeanStick *movingMeanStick[];
+
     public:
-      BandBollinger(const int value,const string inpattern,const int inmms,const int indeviation);
-      ~BandBollinger();
+      MovingMean(const int value,const string inpattern,const int inmms21,const int inmms200);
+      ~MovingMean();
       void Write(const int value);
-      bool Open(const int value,const string intimenow,const bool save);
-      bool Close(const int value,const string intimenow,const bool save);
+      bool High(const int value,const string intimenow,const bool save);
+      bool Low(const int value,const string intimenow,const bool save);      
   };
 //+------------------------------------------------------------------+
 //| Construtor write candle                                          |
 //+------------------------------------------------------------------+
-BandBollinger::BandBollinger(const int value,const string inpattern,const int inmms,const int indeviation)
+MovingMean::MovingMean(const int value,const string inpattern,const int inmms21,const int inmms200)
   {
 //---
     int quantity=value+1;
@@ -49,56 +49,54 @@ BandBollinger::BandBollinger(const int value,const string inpattern,const int in
       candlestick[i].Save(iHigh(_Symbol,_Period,i),iOpen(_Symbol,_Period,i),iClose(_Symbol,_Period,i),iLow(_Symbol,_Period,i),TimeToString(iTime(_Symbol,_Period,i)),iVolume(_Symbol,_Period,i),inpattern,_Symbol);
     }
 //---
-    ArrayResize(bandBollingerStick,quantity);
+    ArrayResize(movingMeanStick,quantity);
     MovingAverage *movingAverage;
-    movingAverage=new MovingAverage(quantity,"BAND BOLLINGER");
-    int mms_value=inmms;
-    int deviation_value=indeviation;
+    movingAverage=new MovingAverage(quantity,"MOVING MEAN");
+    int mms21_value=inmms21;
+    int mms200_value=inmms200;
     for(int i=quantity; i>=0; i--) {
-      double mms_cumulate=movingAverage.MMS(quantity,i,mms_value);
-      double bandup_cumulate=movingAverage.BandUp(quantity,i,mms_value,indeviation);
-      double banddown_cumulate=movingAverage.BandDown(quantity,i,mms_value,indeviation);
-      bandBollingerStick[i]=new BandBollingerStick();
-      bandBollingerStick[i].Add(i,bandup_cumulate,mms_cumulate,banddown_cumulate);
+      double mms21_cumulate=movingAverage.MMS(quantity,i,mms21_value);
+      double mms200_cumulate=movingAverage.MMS(quantity,i,mms200_value);
+      movingMeanStick[i]=new MovingMeanStick();
+      movingMeanStick[i].Add(i,mms21_cumulate,mms200_cumulate);
     }
   }
 //+------------------------------------------------------------------+
 //| Destructor                                                       |
 //+------------------------------------------------------------------+
-BandBollinger::~BandBollinger()
+MovingMean::~MovingMean()
   {
   }
 //+------------------------------------------------------------------+
 //| Write                                                            |
 //+------------------------------------------------------------------+
-void BandBollinger::Write(const int value)
+void MovingMean::Write(const int value)
   {
     for(int i=1; i<value; i++)
       WriteCandle(DoubleToString(candlestick[i].getHigh()),DoubleToString(candlestick[i].getOpen()),DoubleToString(candlestick[i].getClose()),DoubleToString(candlestick[i].getLow()),IntegerToString(i));
+//---
+
   }
 //+------------------------------------------------------------------+
-//| Verify opening                                                   |
+//| Verify moving average high                                       |
 //+------------------------------------------------------------------+
-bool BandBollinger::Open(const int value,const string intimenow,const bool save)
+bool MovingMean::High(const int value,const string intimenow,const bool save)
   {
 //---  
     int value1=value;
-    int value2=value+1;
-    int value3=value2+1;
-    int account_max=3+1;
+    int account_max=1+1;
 //---
     string inTime="",inPattern="",inSymbol="";
 //---
-    double account[];
+    enum ENUM_SINAL {TRUE = 1, FALSE = -1, ZERO = 0};
+    ENUM_SINAL account[];
     ArrayResize(account,account_max);
-    for(int i=0; i<account_max; i++) account[i]=0;
-//---    
-    for(int i=value1; i<=value3; i++) {
-      if(i==value1) account[1]=bollingermean(bandBollingerStick[i].bandup,bandBollingerStick[i].mms);
-      if(i==value2) account[2]=bollingermean(bandBollingerStick[i].bandup,bandBollingerStick[i].mms);
-      if(i==value3) account[3]=bollingermean(bandBollingerStick[i].bandup,bandBollingerStick[i].mms);
+    for(int i=0; i<account_max; i++) account[i]=ZERO;
 //---
-      if((account[1]>account[2]) && (account[2]>account[3])) {
+    for(int i=value1; i<=value1; i++) {
+      if(i==value1) if(movingmeanhigh(movingMeanStick[i].mms21,movingMeanStick[i].mms200)) account[1]=TRUE; else account[1]=FALSE;
+//---
+      if(account[1]==TRUE) {
 //---
         inTime=candlestick[value1].getTime();
         inPattern=candlestick[value1].getPattern();
@@ -112,32 +110,31 @@ bool BandBollinger::Open(const int value,const string intimenow,const bool save)
         return true;
       }
     }
-//---
+//---    
     return false;
-  }
+//---
+
+  }  
 //+------------------------------------------------------------------+
-//| Verify closing                                                   |
+//| Verify moving average low                                        |
 //+------------------------------------------------------------------+
-bool BandBollinger::Close(const int value,const string intimenow,const bool save)
+bool MovingMean::Low(const int value,const string intimenow,const bool save)
   {
 //---  
     int value1=value;
-    int value2=value+1;
-    int value3=value2+1;
-    int account_max=3+1;
+    int account_max=1+1;
 //---
     string inTime="",inPattern="",inSymbol="";
 //---
-    double account[];
+    enum ENUM_SINAL {TRUE = 1, FALSE = -1, ZERO = 0};
+    ENUM_SINAL account[];
     ArrayResize(account,account_max);
-    for(int i=0; i<account_max; i++) account[i]=0;
-//---    
-    for(int i=value1; i<=value3; i++) {
-      if(i==value1) account[1]=bollingermean(bandBollingerStick[i].bandup,bandBollingerStick[i].mms);
-      if(i==value2) account[2]=bollingermean(bandBollingerStick[i].bandup,bandBollingerStick[i].mms);
-      if(i==value3) account[3]=bollingermean(bandBollingerStick[i].bandup,bandBollingerStick[i].mms);
+    for(int i=0; i<account_max; i++) account[i]=ZERO;
 //---
-      if((account[1]<account[2]) && (account[2]<account[3])) {
+    for(int i=value1; i<=value1; i++) {
+      if(i==value1) if(movingmeanlow(movingMeanStick[i].mms21,movingMeanStick[i].mms200)) account[1]=TRUE; else account[1]=FALSE;
+//---
+      if(account[1]==TRUE) {
 //---
         inTime=candlestick[value1].getTime();
         inPattern=candlestick[value1].getPattern();
@@ -151,7 +148,9 @@ bool BandBollinger::Close(const int value,const string intimenow,const bool save
         return true;
       }
     }
-//---
+//---    
     return false;
-  }
+//---
+
+  }    
 //+------------------------------------------------------------------+

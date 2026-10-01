@@ -21,7 +21,6 @@ class CandleStick
     private:
   
     protected:
-      //CandleStick *candlehigh;
       double open;
       double close;
       double high;
@@ -30,7 +29,6 @@ class CandleStick
       double volume;
       string pattern;
       string symbol;
-      //CandleStick *candlelow;
     
     public:
       CandleStick();

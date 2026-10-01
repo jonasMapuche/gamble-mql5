@@ -51,7 +51,7 @@ input int ORDER_OPEN=1;
 int OnInit()
   {
 //--- create timer
-   EventSetTimer(60);
+    EventSetTimer(60);
 //---
     if(!symbolInfo.Name(_Symbol)){
       return INIT_FAILED;
@@ -84,7 +84,7 @@ int OnInit()
     //GolangDLLPost("{\"message\":\"init\"}");
     //SendPush("init send notification");
 //---
-   return(INIT_SUCCEEDED);
+    return(INIT_SUCCEEDED);
   }
 //+------------------------------------------------------------------+
 //| Expert deinitialization function                                 |
@@ -126,8 +126,7 @@ void OnTick()
       } else if(!IsTimeClose()){
         loop_quantity++;
       }
-    }    
-
+    } 
   }
 //+------------------------------------------------------------------+
 //| Timer function                                                   |
@@ -198,8 +197,9 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
 //+------------------------------------------------------------------+
 bool IsNewDay()
   {
+  /*
 //---
-    static datetime old_day=0;
+    static int old_day=0;
 //---
     MqlRates mrate[];    
     ArraySetAsSeries(mrate,true);      
@@ -207,9 +207,12 @@ bool IsNewDay()
     datetime lastbar_time=mrate[0].time;
     MqlDateTime time;
     TimeToStruct(lastbar_time,time);
+  */
+    static datetime old_day=0;
+    datetime currenty_day = iTime(_Symbol, PERIOD_D1, 0);
 //---
-    if(old_day<time.day_of_year) { 
-      old_day=time.day_of_year;
+    if(old_day<currenty_day) { 
+      old_day=currenty_day;
       return true;
     }
 //---
@@ -1020,10 +1023,10 @@ void ClosePattern(PositionStick &positionStick[])
         Strategy *strategy;
         strategy=new Strategy();
 //---        
-        bool macd=false;
+        bool pattern=false;
         for(int i=total_position-1;i>=0;i--){
-          macd=strategy.MACDClose(positionStick[i]);
-          if(macd) ClosePosition(positionStick[i]);
+          pattern=strategy.Pattern1Close(positionStick[i]);
+          if(pattern) ClosePosition(positionStick[i]);
         }                        
       }
     }  
@@ -1077,12 +1080,17 @@ void OpenPattner()
       Strategy *strategy;
       strategy=new Strategy();
 //---        
-      bool macd_buy=false;
-      bool macd_sell=false;
-      macd_buy=strategy.MACDOpen(POSITION_TYPE_BUY);
-      macd_sell=strategy.MACDOpen(POSITION_TYPE_SELL);
-      if(macd_buy) OpenPosition(POSITION_TYPE_BUY);
-      if(macd_sell) OpenPosition(POSITION_TYPE_SELL);
+      bool pattern_buy=false;
+      bool pattern_sell=false;
+//---      
+      pattern_buy=strategy.PatternFibonacciOpen(POSITION_TYPE_BUY);
+      //pattern_sell=strategy.PatternFibonacciOpen(POSITION_TYPE_SELL);
+//---      
+/*
+      pattern_sell=strategy.Pattern1Open(POSITION_TYPE_SELL);
+      if(pattern_buy) OpenPosition(POSITION_TYPE_BUY);
+      if(pattern_sell) OpenPosition(POSITION_TYPE_SELL);
+*/
     }  
 //---
 

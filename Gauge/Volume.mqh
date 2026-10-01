@@ -28,8 +28,9 @@ class Volume
     public:
       Volume(const int value,const string inpattern);
       ~Volume();
-      double Balance(const int quantity, const int start);
-      double MME(const int quantity, const int period);
+      double Balance(const int inquantity, const int inposition);
+      double MME(const int inquantity, const int inposition,const int inmme);
+      double MMS(const int inquantity, const int inposition,const int inmms);
   };
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -41,6 +42,8 @@ Volume::Volume(const int value,const string inpattern)
       candlestick[i]=new CandleStick();
       candlestick[i].Save(iHigh(_Symbol,_Period,i),iOpen(_Symbol,_Period,i),iClose(_Symbol,_Period,i),iLow(_Symbol,_Period,i),TimeToString(iTime(_Symbol,_Period,i)),iVolume(_Symbol,_Period,i),inpattern,_Symbol);
     }
+//---
+    
   }
 //+------------------------------------------------------------------+
 //| Destructor                                                       |
@@ -51,17 +54,17 @@ Volume::~Volume()
 //+------------------------------------------------------------------+
 //| Volume Balance                                                   |
 ///+-----------------------------------------------------------------+
-double Volume::Balance(const int quantity, const int start)
+double Volume::Balance(const int inquantity, const int inposition)
   {
 //---
-    int instart=quantity;
-    int inend=start;
-    int prior=instart;
+    int start=inquantity;
+    int end=inposition;
+    int prior=start;
     double cumulate=0;
 //---
-    for(int value=instart;value<inend;value--) {
+    for(int value=start;value>=end;value--) {
 //---
-      if(value==quantity){
+      if(value==start){
         cumulate=candlestick[value].getVolume();
         continue;
       }
@@ -73,58 +76,88 @@ double Volume::Balance(const int quantity, const int start)
     }
 //---
     return cumulate;
+//---
+
   }  
+//+------------------------------------------------------------------+
+//| Moving average sample                                            |
+///+-----------------------------------------------------------------+
+double Volume::MMS(const int inquantity, const int inposition,const int inmms)
+  {
+//---
+    int start=inquantity;
+    int end=inposition;
+    int mms=inmms;
+    double cumulate=0;
+//---    
+    if((start-end)<mms) return cumulate;
+    if((start-end)>mms) start=end+mms;
+//---
+    for(int value=start;value>=end;value--) {
+      cumulate+=candlestick[value].getVolume();
+    }
+//---
+    double volume=cumulate/mms;    
+//---
+    return volume;
+//---    
+
+}  
 //+------------------------------------------------------------------+
 //| Moving average exponential                                       |
 ///+-----------------------------------------------------------------+
-double Volume::MME(const int quantity, const int period)
+double Volume::MME(const int inquantity, const int inposition,const int inmme)
   {
 //---
-    int day=0;
-    int average=quantity;
-    int mean=period;
-    int prior=0;
-    ENUM_TIMEFRAMES time_enum=PERIOD_D1;
-//---    
-    MqlRates mrate[];    
-    ArraySetAsSeries(mrate,true);      
-    CopyRates(_Symbol,time_enum,day,average,mrate);
-//---
-    double factor=2.0/((double)mean+1.0);
-//---
-    double mmeprior=0;
+    int start=inquantity;
+    int position=inposition;
+    int end=position;
+    int prior=start;
+    int mme=inmme;
     double cumulate=0;
-    for(int value=average-1;value>=0;value--) {
+//---    
+    if((start-end)<mme) return cumulate;
+    if((start-end)>mme) end=start-mme;
+//--
+    for(int value=start;value>=end;value--) {
 //---
-      if(value==quantity) {
+      if(value==start) {
         cumulate=candlestick[value].getVolume();
         continue;
       }
       if(candlestick[value].getClose()>candlestick[prior].getClose()) cumulate+=candlestick[value].getVolume();
       if(candlestick[value].getClose()<candlestick[prior].getClose()) cumulate-=candlestick[value].getVolume();
-      //cumulate+=mrate[value].tick_volume;
 //---
       prior--;
     }
-    mmeprior=cumulate/quantity;    
+    double first_mme=cumulate/mme;    
+//---
+    double factor=2.0/((double)mme+1.0);
+//---
+    double mme_currenty=first_mme;
+    double mme_prior=0;
+    cumulate=0;
+//---
+    start=start+mme;
+    end=position;
 //---    
-    double mmecurrenty=mmeprior;
-    double hive=0;
-    for(int value=average-1;value>=0;value--)
+    for(int value=start;value>=end;value--)
     {
 //---
-      if(value==quantity) {
-        hive=candlestick[value].getVolume();
+      if(value==start) {
+        cumulate=mme_currenty;
         continue;
       }
-      if(candlestick[value].getClose()>candlestick[prior].getClose()) hive+=candlestick[value].getVolume();
-      if(candlestick[value].getClose()<candlestick[prior].getClose()) hive-=candlestick[value].getVolume();
+      if(candlestick[value].getClose()>candlestick[prior].getClose()) cumulate+=candlestick[value].getVolume();
+      if(candlestick[value].getClose()<candlestick[prior].getClose()) cumulate-=candlestick[value].getVolume();
 //---
-      mmecurrenty=mmeprior+(factor*(hive-mmeprior));
-      mmeprior=mmecurrenty;
+      mme_currenty=mme_prior+(factor*(cumulate-mme_prior));
+      mme_prior=mme_currenty;
       prior--;
     }
 //---
-    return mmecurrenty;
+    return mme_currenty;
+//---
+
   }
 //+------------------------------------------------------------------+

@@ -28,10 +28,11 @@ class MovingAverage
     public:
       MovingAverage(const int value,const string inpattern);
       ~MovingAverage();
-      double MME(const int quantity);
-      double MMS(const int inquantity,const int inposition);   
-      double BandUp(const int inquantity,const int inposition,const int indeviation);
-      double BandDown(const int inquantity,const int inposition,const int indeviation);
+      double MME(const int inquantity, const int inposition,const int inmms);
+      double MMS(const int inquantity, const int inposition,const int inmms);   
+      double MACD(const int inquantity, const int inposition,const int inmme);
+      double BandUp(const int inquantity,const int inposition,const int indeviation,const int inmms);
+      double BandDown(const int inquantity,const int inposition,const int indeviation,const int inmms);
   };
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
@@ -43,6 +44,8 @@ MovingAverage::MovingAverage(const int value,const string inpattern)
       candlestick[i]=new CandleStick();
       candlestick[i].Save(iHigh(_Symbol,_Period,i),iOpen(_Symbol,_Period,i),iClose(_Symbol,_Period,i),iLow(_Symbol,_Period,i),TimeToString(iTime(_Symbol,_Period,i)),iVolume(_Symbol,_Period,i),inpattern,_Symbol);
     }
+//---
+    
   }
 //+------------------------------------------------------------------+
 //| Destructor                                                       |
@@ -51,105 +54,146 @@ MovingAverage::~MovingAverage()
   {
   }
 //+------------------------------------------------------------------+
-//| Moving average exponential                                       |
-///+-----------------------------------------------------------------+
-double MovingAverage::MME(const int quantity)
-  {
-//---
-    int day=0;
-    int average=quantity;
-    ENUM_TIMEFRAMES time_enum=PERIOD_D1;
-//---    
-    MqlRates mrate[];    
-    ArraySetAsSeries(mrate,true);      
-    CopyRates(_Symbol,time_enum,day,average,mrate);
-//---
-    double factor=2.0/((double)average+1.0);
-//---
-    double mmeprior=0;
-    double cumulate=0;
-    for(int value=average-1;value>=0;value--)
-    {
-      cumulate+=mrate[value].close;
-    }
-    mmeprior=cumulate/quantity;    
-//---    
-    double mmecurrenty=mmeprior;
-    for(int value=quantity-1;value>=0;value--)
-    {
-      mmecurrenty=(mrate[value].close*factor)+(mmeprior*(1.0-factor));
-      mmeprior=mmecurrenty;
-    }    
-//---
-    return mmecurrenty;
-  } 
-//+------------------------------------------------------------------+
 //| Moving average sample                                            |
 ///+-----------------------------------------------------------------+
-double MovingAverage::MMS(const int inquantity,const int inposition)
+double MovingAverage::MMS(const int inquantity, const int inposition,const int inmms)
   {
 //---
-    int index=inposition;
-    int quantity=inquantity+inposition;
-    int average=inquantity;
+    int start=inquantity;
+    int end=inposition;
+    int mms=inmms;
     double cumulate=0;
 //---    
-    for(int value=index;value<quantity;value++)
-    {
+    if((start-end)<mms) return cumulate;
+    if((start-end)>mms) start=end+mms;
+//---
+    for(int value=start;value>=end;value--) {
       cumulate+=candlestick[value].getClose();
     }
-    double mms=cumulate/average;    
 //---
-    return mms;
+    double mean=cumulate/mms;    
+//---
+    return mean;
+//---    
+
   }
+//+------------------------------------------------------------------+
+//| Moving average exponential                                       |
+///+-----------------------------------------------------------------+
+double MovingAverage::MME(const int inquantity, const int inposition,const int inmme)
+  {
+//---
+    int start=inquantity;
+    int position=inposition;
+    int end=position;
+    int mme=inmme;
+    double cumulate=0;
+//---    
+    if((start-end)<mme) return cumulate;
+    if((start-end)>mme) end=start-mme;
+//---
+    cumulate=MMS(inquantity,inposition,inmme);        
+    double first_mme=cumulate/mme;    
+//---
+    double factor=2.0/((double)mme+1.0);
+//---
+    double mme_currenty=first_mme;
+    double mme_prior=0;
+    cumulate=0;
+//---
+    start=start+mme;
+    end=position;
+//---
+    for(int value=start;value>=end;value--)
+    {
+      mme_currenty=(candlestick[value].getClose()*factor)+(mme_prior*(1.0-factor));
+      mme_prior=mme_currenty;
+    }
+//---
+    return mme_currenty;
+//---
+
+  }
+//+------------------------------------------------------------------+
+//| macd                                                             |
+///+-----------------------------------------------------------------+
+double MovingAverage::MACD(const int inquantity, const int inposition,const int inmme)
+  {
+//---
+    int quantity=inquantity;
+    int position=inposition;
+    double cumulate=0;
+//---
+    int mme26_value=26;
+    int mme12_value=12;
+    int mme9_value=inmme;
+//---
+    double mme26_cumulate=MME(quantity,position,mme26_value);
+    double mme12_cumulate=MME(quantity,position,mme12_value);
+    double macd_cumulate=mme26_cumulate/mme12_cumulate;
+//---
+    return macd_cumulate;
+//---    
+
+  }   
 //+------------------------------------------------------------------+
 //| Band bollinger up                                                |
 ///+-----------------------------------------------------------------+
-double MovingAverage::BandUp(const int inquantity,const int inposition,const int indeviation)
+double MovingAverage::BandUp(const int inquantity,const int inposition,const int indeviation,const int inmms)
   {
 //---
-    double mms=MMS(inquantity,inposition);    
-//---
-    int index=inposition;
-    int quantity=inquantity+inposition;
-    int average=inquantity;
-    int ratio=indeviation;
+    int start=inquantity;
+    int position=inposition;
+    int deviation=indeviation;    
+    int end=position;
+    int mms=inmms;
+    double cumulate=0;
 //---    
-    double square=0;
-    for(int value=index;value<quantity;value++)
-    {
+    if((start-end)<mms) return cumulate;
+    if((start-end)>mms) start=end+mms;
+//---
+    double mean=MMS(inquantity,inposition,inmms);    
+//---
+    for(int value=start;value>=end;value--) {
       double diff=candlestick[value].getClose()-mms;
-      square+=diff*diff;
+      cumulate+=diff*diff;
     }
-    double variance=square/average;
-    double deviation=MathSqrt(variance);
-    double band=mms+(deviation*ratio);
+    double variance=cumulate/mms;
+    double ratio=MathSqrt(variance);
+    double band=mean+(ratio*deviation);
 //---
     return band;
+//---
+
   }
 //+------------------------------------------------------------------+
 //| Band bollinger down                                              |
 ///+-----------------------------------------------------------------+
-double MovingAverage::BandDown(const int inquantity,const int inposition,const int indeviation)
+double MovingAverage::BandDown(const int inquantity,const int inposition,const int indeviation,const int inmms)
   {
 //---
-    double mms=MMS(inquantity,inposition);    
+    int start=inquantity;
+    int position=inposition;
+    int deviation=indeviation;    
+    int end=position;
+    int mms=inmms;
+    double cumulate=0;
+//---    
+    if((start-end)<mms) return cumulate;
+    if((start-end)>mms) start=end+mms;
 //---
-    int index=inposition;
-    int quantity=inquantity+inposition;
-    int average=inquantity;
-    int ratio=indeviation;
+    double mean=MMS(inquantity,inposition,inmms);    
 //---
-    double square=0;
-    for(int value=index;value<quantity;value++)
-    {
+    for(int value=start;value>=end;value--) {
       double diff=candlestick[value].getClose()-mms;
-      square+=diff*diff;
+      cumulate+=diff*diff;
     }
-    double variance=square/average;
-    double deviation=MathSqrt(variance);
-    double band=mms-(deviation*ratio);
+    double variance=cumulate/mms;
+    double ratio=MathSqrt(variance);
+    double band=mean-(ratio*deviation);
 //---
     return band;
+//---
+
   }
 //+------------------------------------------------------------------+
